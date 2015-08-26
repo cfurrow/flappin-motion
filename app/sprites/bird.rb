@@ -3,7 +3,7 @@ class Bird < SKSpriteNode
 
   def init
     self.initWithImageNamed("bird_one.png")
-    self.physicsBody = physics_body
+    turn_on_physics
     self.position = CGPointMake(80, 400)
     self.scale = 1.1
     self.name = "bird"
@@ -18,6 +18,18 @@ class Bird < SKSpriteNode
     animation = SKAction.animateWithTextures([bird_one, bird_two, bird_three], timePerFrame: 0.15)
 
     SKAction.repeatActionForever animation
+  end
+
+  def turn_off_physics(&block)
+    self.physicsBody = nil
+    if block_given?
+      yield
+      turn_on_physics
+    end
+  end
+
+  def turn_on_physics
+    self.physicsBody = physics_body
   end
 
   def physics_body
