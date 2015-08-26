@@ -145,29 +145,14 @@ class SkyLineScene < SKScene
 
   # Contact delegate method
   #
-  # def didBeginContact(contact)
-  #   bird = childNodeWithName("bird")
-  #   bird.position = CGPointMake(80, CGRectGetMidY(self.frame))
-  #   bird.zRotation = 0
-  #
-  #   enumerateChildNodesWithName "pipes", usingBlock:-> (node, stop) { node.removeFromParent }
-  # end
-
-  # Alternate Contact Method for multiple contact bodies.
-  #
   def didBeginContact(contact)
-    if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask
-      bird = contact.bodyA
-    else
-      bird = contact.bodyB
+    bird = childNodeWithName("bird")
+    bird.turn_off_physics do
+      bird.position = CGPointMake(80, CGRectGetMidY(self.frame))
     end
+    bird.zRotation = 0
 
-    if bird.categoryBitMask == Bird::BIRD
-      bird.node.zRotation = 0
-      bird.node.position = CGPointMake(80, CGRectGetMidY(self.frame))
-
-      enumerateChildNodesWithName "pipes", usingBlock:-> (node, stop) { node.removeFromParent }
-    end
+    enumerateChildNodesWithName "pipes", usingBlock:-> (node, stop) { node.removeFromParent }
   end
 
   # Helper methods.
