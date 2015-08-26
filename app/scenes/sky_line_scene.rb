@@ -13,7 +13,7 @@ class SkyLineScene < SKScene
 
     add_pause_label
 
-    begin_spawning_pipes
+    show_go_button
   end
 
   def add_pause_label
@@ -21,6 +21,15 @@ class SkyLineScene < SKScene
     label.text = "Pause"
     label.position = CGPointMake(80, 500)
     label.name = "pause"
+    addChild label
+  end
+
+  def show_go_button
+    removeActionForKey("add_pipes_action")
+    label = SKLabelNode.labelNodeWithFontNamed("Chalkduster")
+    label.text = "Go!"
+    label.position = CGPointMake(mid_x, mid_y)
+    label.name = "go"
     addChild label
   end
 
@@ -57,6 +66,15 @@ class SkyLineScene < SKScene
 
   def add_bird
     addChild Bird.alloc.init
+    reset_bird_position
+  end
+
+  def bird
+    @bird ||= childNodeWithName("bird")
+  end
+
+  def reset_bird_position
+    bird.position = CGPointMake(80, mid_y + bird.size.height / 2)
   end
 
   def begin_spawning_pipes
@@ -64,7 +82,9 @@ class SkyLineScene < SKScene
     delay = SKAction.waitForDuration(4.0)
     sequence = SKAction.sequence([pipes, delay])
 
-    runAction SKAction.repeatActionForever(sequence)
+    action = SKAction.repeatActionForever(sequence)
+
+    runAction action, withKey: "add_pipes_action"
   end
 
   def add_pipes
@@ -84,12 +104,12 @@ class SkyLineScene < SKScene
   def update(current_time)
     @delta = @last_update_time ?  current_time - @last_update_time : 0
     @last_update_time = current_time
+    #@bird = nil # Force bird refresh once per frame
 
     check_controller
-    
-    rotate_bird
-  end
 
+    bird.rotate
+  end
 
   def touchesBegan(touches, withEvent: event)
     touch = touches.anyObject
@@ -102,23 +122,17 @@ class SkyLineScene < SKScene
       else
         self.paused = true
       end
+    elsif node.name == "go"
+      node.removeFromParent
+      remove_all_pipes
+
+      reset_bird_position
+      bird.turn_on_physics
+
+      begin_spawning_pipes
     else
-      bird_jump
+      bird.jump
     end
-
-  end
-
-  def bird_jump
-    bird = childNodeWithName("bird")
-
-    bird.physicsBody.velocity = CGVectorMake(0, 0)
-    bird.physicsBody.applyImpulse CGVectorMake(0, 8)
-  end
-
-  def rotate_bird
-    node = childNodeWithName("bird")
-    dy = node.physicsBody.velocity.dy
-    node.zRotation = max_rotate(dy * (dy < 0 ? 0.003 : 0.001))
   end
 
   def check_controller
@@ -128,30 +142,23 @@ class SkyLineScene < SKScene
       controller = controller.first.extendedGamepad
 
       if controller.buttonA.isPressed?
-        bird_jump
+        bird.jump
       end
-    end
-  end
-
-  def max_rotate(value)
-    if value > 0.7
-      0.7
-    elsif value < -0.3
-      -0.3
-    else
-      value
     end
   end
 
   # Contact delegate method
   #
   def didBeginContact(contact)
-    bird = childNodeWithName("bird")
-    bird.turn_off_physics do
-      bird.position = CGPointMake(80, CGRectGetMidY(self.frame))
-    end
+    bird.turn_off_physics
+    reset_bird_position
+    show_go_button
     bird.zRotation = 0
 
+    remove_all_pipes
+  end
+
+  def remove_all_pipes
     enumerateChildNodesWithName "pipes", usingBlock:-> (node, stop) { node.removeFromParent }
   end
 

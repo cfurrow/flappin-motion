@@ -3,7 +3,6 @@ class Bird < SKSpriteNode
 
   def init
     self.initWithImageNamed("bird_one.png")
-    turn_on_physics
     self.position = CGPointMake(80, 400)
     self.scale = 1.1
     self.name = "bird"
@@ -20,6 +19,30 @@ class Bird < SKSpriteNode
     SKAction.repeatActionForever animation
   end
 
+  def jump
+    if physics_enabled?
+      physicsBody.velocity = CGVectorMake(0, 0)
+      physicsBody.applyImpulse CGVectorMake(0, 8)
+    end
+  end
+
+  def rotate
+    if physics_enabled?
+      dy = physicsBody.velocity.dy
+      self.zRotation = max_rotate(dy * (dy < 0 ? 0.003 : 0.001))
+    end
+  end
+
+  def max_rotate(value)
+    if value > 0.7
+      0.7
+    elsif value < -0.3
+      -0.3
+    else
+      value
+    end
+  end
+
   def turn_off_physics(&block)
     self.physicsBody = nil
     if block_given?
@@ -30,6 +53,10 @@ class Bird < SKSpriteNode
 
   def turn_on_physics
     self.physicsBody = physics_body
+  end
+
+  def physics_enabled?
+    !!self.physicsBody
   end
 
   def physics_body
